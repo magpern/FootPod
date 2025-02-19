@@ -5,6 +5,7 @@ from treadmill_service import run_treadmill_service
 from fit_generator import FitFileGenerator
 from logger_config import logger
 from config import BLE_HRM_SENSOR_ADDRESS, BLE_TREADMILL_SENSOR_ADDRESS
+from config import MOCK_HRM, MOCK_FTMS
 
 # Global stop event
 stop_event = threading.Event()
@@ -68,24 +69,23 @@ def start_services():
     # Start HRM service
     threading.Thread(
         target=run_garmin_hrm_service, 
-        args=(BLE_HRM_SENSOR_ADDRESS, update_hrm_data, update_stride_cadence, on_hrm_disconnected, hrm_connection_event), 
+        args=(update_hrm_data, update_stride_cadence, on_hrm_disconnected, hrm_connection_event), 
         daemon=True
     ).start()
 
     # Start FTMS service
     threading.Thread(
         target=run_treadmill_service, 
-        args=(BLE_TREADMILL_SENSOR_ADDRESS, update_treadmill_data, on_ftms_disconnected, ftms_connection_event), 
+        args=(update_treadmill_data, on_ftms_disconnected, ftms_connection_event), 
         daemon=True
     ).start()
 
-    # Wait for HRM connection
-    if not hrm_connection_event.wait(timeout=30):
-        logger.warning("⚠️ HRM failed to connect within 30 seconds. Continuing...")
+    # Only wait for connections if not mocking
+    if not MOCK_HRM and not hrm_connection_event.wait(timeout=30):
+        logger.warning("⚠️ HRM failed to connect within 30 seconds. Retrying...")
 
-    # Wait for FTMS connection
-    if not ftms_connection_event.wait(timeout=30):
-        logger.warning("⚠️ FTMS failed to connect within 30 seconds. Continuing...")
+    if not MOCK_FTMS and not ftms_connection_event.wait(timeout=30):
+        logger.warning("⚠️ FTMS failed to connect within 30 seconds. Retrying...")
 
 
 def stop_services():
@@ -94,5 +94,5 @@ def stop_services():
     
     stop_event.set()  # Signal all threads to stop
     time.sleep(2)  # Allow some time for threads to exit
-    fit_generator.end_workout()
+    #fit_generator.end_workout()
     logger.info("✅ Services stopped successfully.")

@@ -1,13 +1,15 @@
 import asyncio
 import threading
+import random
 from bleak import BleakClient, BleakError
 from logger_config import logger
+from config import BLE_TREADMILL_SENSOR_ADDRESS, MOCK_FTMS
 
 class TreadmillService:
-    """Fetches treadmill speed and incline from BLE FTMS service."""
+    """Fetches treadmill speed and incline from BLE FTMS service OR returns mock data."""
 
-    def __init__(self, ble_address, callback=None, disconnect_callback=None, connection_event=None):
-        self.ble_address = ble_address
+    def __init__(self, callback=None, disconnect_callback=None, connection_event=None):
+        self.ble_address = BLE_TREADMILL_SENSOR_ADDRESS
         self.ftms_uuid = "00002acd-0000-1000-8000-00805f9b34fb"  # FTMS UUID
         self.callback = callback
         self.disconnect_callback = disconnect_callback
@@ -15,7 +17,15 @@ class TreadmillService:
         self.client = None
 
     async def connect_and_listen(self):
-        """Continuously tries to connect to BLE treadmill and listens for updates."""
+        """Continuously tries to connect to BLE treadmill and listens for updates OR mocks data."""
+        if MOCK_FTMS:
+            logger.info("🟢 FTMS Mocking Enabled - Simulating BLE Treadmill Data")
+            await self.mock_ftms_data()
+        else:
+            await self.real_ftms_data()
+
+    async def real_ftms_data(self):
+        """Handles real FTMS BLE communication."""
         while True:
             try:
                 logger.info(f"🔄 Attempting to connect to FTMS Treadmill: {self.ble_address}")
@@ -27,7 +37,6 @@ class TreadmillService:
                     if self.connection_event:
                         self.connection_event.set()  # Notify service_manager that connection is established
 
-                    # Subscribe to FTMS notifications
                     await client.start_notify(self.ftms_uuid, self.notification_handler)
 
                     while True:
@@ -39,30 +48,29 @@ class TreadmillService:
                     self.connection_event.clear()  # Indicate connection failure
                 await asyncio.sleep(10)  # Retry after delay
 
+    async def mock_ftms_data(self):
+        """Mocks FTMS treadmill speed (3 km/h), incline (1%), and calculated distance."""
+        distance_m = 0  # Start distance at 0
+        while True:
+            speed_mps = 3.0 / 3.6  # Convert 3 km/h to m/s
+            incline = 1.0  # 1% incline
+            distance_m += speed_mps * 1  # Increase distance every second
+
+            if self.callback:
+                self.callback(speed_mps, incline)
+
+            logger.info(f"🟢 Mock FTMS -> Speed: {speed_mps:.2f} m/s, Incline: {incline:.1f}%, Distance: {distance_m:.1f} m")
+
+            await asyncio.sleep(1)  # Simulate FTMS update every second
+
     def on_disconnect(self, client):
         """Handles BLE disconnection."""
         logger.warning(f"⚠️ FTMS Treadmill Disconnected! Reconnecting...")
         if self.disconnect_callback:
             self.disconnect_callback()
 
-    def notification_handler(self, sender, data):
-        """Handles incoming FTMS treadmill data."""
-        try:
-            speed = data[2] / 100.0  # Convert to m/s
-            incline = data[4] / 10.0  # Convert to % grade
-
-            if self.callback:
-                self.callback(speed, incline)
-
-        except Exception as e:
-            logger.error(f"❌ Error processing FTMS data: {e}")
-
-    def start(self):
-        """Starts the BLE FTMS listener in a separate asyncio task."""
-        asyncio.create_task(self.connect_and_listen())
-
-def run_treadmill_service(ble_address, callback, disconnect_callback, connection_event):
-    """Starts the FTMS treadmill BLE service in a separate thread."""
-    treadmill_service = TreadmillService(ble_address, callback, disconnect_callback, connection_event)
+def run_treadmill_service(callback, disconnect_callback, connection_event):
+    """Starts the FTMS treadmill BLE service in a separate thread OR runs a mock."""
+    treadmill_service = TreadmillService(callback, disconnect_callback, connection_event)
     thread = threading.Thread(target=asyncio.run, args=(treadmill_service.connect_and_listen(),), daemon=True)
     thread.start()

@@ -22,3 +22,7 @@ FIT_FILE_NAME = "treadmill_workout.fit"
 MANUFACTURER_ID = 130  # Example Manufacturer ID
 SOFTWARE_VERSION = 2
 SERIAL_NUMBER = 12345678
+
+# 🔹 Enable/Disable BLE Mocks
+MOCK_FTMS = True  # Set to False to use real FTMS
+MOCK_HRM = True   # Set to False to use real HRM
