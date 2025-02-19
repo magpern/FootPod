@@ -1,0 +1,6 @@
+bleak
+requests
+matplotlib
+fitparse
+fitdecode
+openant
