@@ -3,18 +3,18 @@ from openant.easy.channel import Channel
 from logger_config import logger
 from data_processor import compute_metrics
 from service_manager import sensor_data  # Import shared sensor data
-
-# ANT+ Network Configuration
-NETWORK_KEY = [0xB9, 0xA5, 0x21, 0xFB, 0xBD, 0x72, 0xC3, 0x45]
+from config import ANT_NETWORK_KEY, FOOTPOD_DEVICE_ID, FOOTPOD_DEVICE_TYPE, FOOTPOD_TRANSMISSION_TYPE, FOOTPOD_RF_FREQUENCY, FOOTPOD_PERIOD
+from config import MANUFACTURER_ID, SOFTWARE_VERSION, SERIAL_NUMBER
 
 # Create ANT+ node and channel
 node = Node()
 footpod_channel = node.new_channel(Channel.Type.BIDIRECTIONAL_TRANSMIT)
-node.set_network_key(0, NETWORK_KEY)
+node.set_network_key(0, ANT_NETWORK_KEY)
 
-footpod_channel.set_rf_freq(57)
-footpod_channel.set_period(8134)  # 4Hz update rate
-footpod_channel.set_id(1001, 124, 5)  # Foot Pod Device Type 124
+# Configure FootPod ANT+ Channel
+footpod_channel.set_rf_freq(FOOTPOD_RF_FREQUENCY)
+footpod_channel.set_period(FOOTPOD_PERIOD)
+footpod_channel.set_id(FOOTPOD_DEVICE_ID, FOOTPOD_DEVICE_TYPE, FOOTPOD_TRANSMISSION_TYPE)
 footpod_channel.open()
 
 logger.info("✅ ANT+ Foot Pod Broadcasting Started")

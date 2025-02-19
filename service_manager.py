@@ -4,6 +4,7 @@ from heartrate_service import run_garmin_hrm_service
 from treadmill_service import run_treadmill_service
 from fit_generator import FitFileGenerator
 from logger_config import logger
+from config import BLE_HRM_SENSOR_ADDRESS, BLE_TREADMILL_SENSOR_ADDRESS
 
 # Global stop event
 stop_event = threading.Event()
@@ -60,29 +61,29 @@ def on_ftms_disconnected():
     ftms_connection_event.clear()  # Reset connection event
     threading.Thread(target=run_treadmill_service, args=(treadmill_address, update_treadmill_data, on_ftms_disconnected, ftms_connection_event), daemon=True).start()
 
-def start_services(hrm_address, treadmill_address):
-    """Starts BLE services and waits for connection events before proceeding."""
+def start_services():
+    """Starts BLE services using addresses from config.py."""
     logger.info("🚀 Starting BLE services and FIT file recording...")
 
     # Start HRM service
     threading.Thread(
         target=run_garmin_hrm_service, 
-        args=(hrm_address, update_hrm_data, update_stride_cadence, on_hrm_disconnected, hrm_connection_event), 
+        args=(BLE_HRM_SENSOR_ADDRESS, update_hrm_data, update_stride_cadence, on_hrm_disconnected, hrm_connection_event), 
         daemon=True
     ).start()
 
     # Start FTMS service
     threading.Thread(
         target=run_treadmill_service, 
-        args=(treadmill_address, update_treadmill_data, on_ftms_disconnected, ftms_connection_event), 
+        args=(BLE_TREADMILL_SENSOR_ADDRESS, update_treadmill_data, on_ftms_disconnected, ftms_connection_event), 
         daemon=True
     ).start()
 
-    # Wait up to 30 seconds for HRM to connect
+    # Wait for HRM connection
     if not hrm_connection_event.wait(timeout=30):
         logger.warning("⚠️ HRM failed to connect within 30 seconds. Continuing...")
 
-    # Wait up to 30 seconds for FTMS to connect
+    # Wait for FTMS connection
     if not ftms_connection_event.wait(timeout=30):
         logger.warning("⚠️ FTMS failed to connect within 30 seconds. Continuing...")
 
