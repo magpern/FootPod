@@ -68,6 +68,41 @@ class GarminHRMService:
 
             await asyncio.sleep(1)  # Simulate HRM update every second
 
+    def hr_handler(self, sender, data):
+        """Handles incoming heart rate data from HRM sensor."""
+        try:
+            if len(data) < 2:
+                logger.warning("⚠️ Invalid HRM data received, ignoring.")
+                return
+
+            heart_rate = data[1]  # HR value is at index 1
+
+            if self.hr_callback:
+                self.hr_callback(heart_rate)
+
+            logger.info(f"📡 HRM Update -> HR: {heart_rate} BPM")
+
+        except Exception as e:
+            logger.error(f"❌ Error processing HRM data: {e}")
+
+    def cadence_handler(self, sender, data):
+        """Handles incoming cadence data from HRM sensor."""
+        try:
+            if len(data) < 4:
+                logger.warning("⚠️ Invalid cadence data received, ignoring.")
+                return
+
+            cadence_value = data[3]  # Cadence is at index 3 in RSC message
+
+            if self.cadence_callback:
+                self.cadence_callback(cadence_value)
+
+            logger.info(f"📡 HRM Update -> Cadence: {cadence_value} SPM")
+
+        except Exception as e:
+            logger.error(f"❌ Error processing cadence data: {e}")
+
+
     def on_disconnect(self, client):
         """Handles BLE disconnection."""
         logger.warning(f"⚠️ Garmin HRM Disconnected! Reconnecting...")

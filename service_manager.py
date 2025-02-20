@@ -54,13 +54,13 @@ def on_hrm_disconnected():
     """Handles HRM disconnection by resetting connection state and triggering reconnection."""
     logger.warning("⚠️ HRM Disconnected! Restarting service...")
     hrm_connection_event.clear()  # Reset connection event
-    threading.Thread(target=run_garmin_hrm_service, args=(hrm_address, update_hrm_data, update_stride_cadence, on_hrm_disconnected, hrm_connection_event), daemon=True).start()
+    threading.Thread(target=run_garmin_hrm_service, args=(update_hrm_data, update_stride_cadence, on_hrm_disconnected, hrm_connection_event), daemon=True).start()
 
 def on_ftms_disconnected():
     """Handles FTMS disconnection by resetting connection state and triggering reconnection."""
     logger.warning("⚠️ FTMS Disconnected! Restarting service...")
     ftms_connection_event.clear()  # Reset connection event
-    threading.Thread(target=run_treadmill_service, args=(treadmill_address, update_treadmill_data, on_ftms_disconnected, ftms_connection_event), daemon=True).start()
+    threading.Thread(target=run_treadmill_service, args=(update_treadmill_data, on_ftms_disconnected, ftms_connection_event), daemon=True).start()
 
 def start_services():
     """Starts BLE services using addresses from config.py."""
