@@ -55,8 +55,8 @@ class GarminHRMService:
     async def mock_hrm_data(self):
         """Mocks HRM heart rate (80 ±5 bpm) and cadence (40 ±5 spm)."""
         while True:
-            hr_value = random.randint(75, 85)  # 80 ±5 BPM
-            cadence_value = random.randint(35, 45)  # 40 ±5 SPM
+            hr_value = random.randint(110, 125)  # 80 ±5 BPM
+            cadence_value = int(75) # random.randint(35, 45)  # 40 ±5 SPM
 
             if self.hr_callback:
                 self.hr_callback(hr_value)
