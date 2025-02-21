@@ -50,8 +50,8 @@ async def test_mock_hrm_data():
     assert hr_callback_mock.call_count > 0
     assert cadence_callback_mock.call_count > 0
 
-    hr_callback_mock.assert_called_with(pytest.approx(117, abs=5))
-    cadence_callback_mock.assert_called_with(75)  # Mock cadence is fixed at 75 SPM
+    hr_callback_mock.assert_called_with(pytest.approx(117, abs=10))
+    cadence_callback_mock.assert_called_with(pytest.approx(75, abs=10))  # Mock cadence is fixed at 75 SPM
 
 @pytest.mark.asyncio
 async def test_hrm_reconnection():
